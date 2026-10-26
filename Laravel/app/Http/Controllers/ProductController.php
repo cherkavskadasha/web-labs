@@ -80,7 +80,7 @@ class ProductController extends Controller
         ], Response::HTTP_OK);
     }
 
-    // 5. DELETE
+    // 5. DELETE 
     public function deleteProduct($id)
     {
         $index = $this->findProductIndex($id);
@@ -89,8 +89,6 @@ class ProductController extends Controller
             return response()->json(['error' => "Product with ID {$id} not found"], Response::HTTP_NOT_FOUND);
         }
 
-        return response()->json([
-            'message' => "Product {$id} deleted successfully"
-        ], Response::HTTP_OK);
+        return response()->noContent();
     }
 }
