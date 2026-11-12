@@ -16,8 +16,13 @@ use Exception;
 #[Route('/api/book-issues')]
 class BookIssueController extends AbstractController
 {
+    /** @var BookIssueRepository */
     private BookIssueRepository $bookIssueRepository;
+    
+    /** @var BookRepository */
     private BookRepository $bookRepository;
+    
+    /** @var ReaderRepository */
     private ReaderRepository $readerRepository;
 
     public function __construct(
@@ -34,25 +39,7 @@ class BookIssueController extends AbstractController
     public function getBookIssues(): JsonResponse
     {
         $issues = $this->bookIssueRepository->findAll();
-        
-        $data = [];
-        foreach ($issues as $issue) {
-            $data[] = [
-                'id' => $issue->getId(),
-                'book' => [
-                    'id' => $issue->getBook()->getId(),
-                    'title' => $issue->getBook()->getTitle(),
-                ],
-                'reader' => [
-                    'id' => $issue->getReader()->getId(),
-                    'full_name' => $issue->getReader()->getFullName(),
-                ],
-                'issue_date' => $issue->getIssueDate()?->format('Y-m-d'),
-                'return_date' => $issue->getReturnDate()?->format('Y-m-d'),
-            ];
-        }
-
-        return $this->json($data, Response::HTTP_OK);
+        return $this->json($issues, Response::HTTP_OK);
     }
 
     #[Route('/{id}', methods: ['GET'])]
@@ -63,19 +50,7 @@ class BookIssueController extends AbstractController
             return $this->json(['error' => 'Book Issue not found'], Response::HTTP_NOT_FOUND);
         }
 
-        return $this->json([
-            'id' => $issue->getId(),
-            'book' => [
-                'id' => $issue->getBook()->getId(),
-                'title' => $issue->getBook()->getTitle(),
-            ],
-            'reader' => [
-                'id' => $issue->getReader()->getId(),
-                'full_name' => $issue->getReader()->getFullName(),
-            ],
-            'issue_date' => $issue->getIssueDate()?->format('Y-m-d'),
-            'return_date' => $issue->getReturnDate()?->format('Y-m-d'),
-        ], Response::HTTP_OK);
+        return $this->json($issue, Response::HTTP_OK);
     }
 
     #[Route('', methods: ['POST'])]
@@ -107,9 +82,7 @@ class BookIssueController extends AbstractController
 
         $this->bookIssueRepository->save($issue, true);
 
-        return $this->json([
-            'id' => $issue->getId(),
-        ], Response::HTTP_CREATED);
+        return $this->json($issue, Response::HTTP_CREATED);
     }
 
     #[Route('/{id}', methods: ['PATCH'])]
@@ -145,9 +118,7 @@ class BookIssueController extends AbstractController
 
         $this->bookIssueRepository->save($issue, true);
 
-        return $this->json([
-            'id' => $issue->getId(),
-        ], Response::HTTP_OK);
+        return $this->json($issue, Response::HTTP_OK);
     }
 
     #[Route('/{id}', methods: ['DELETE'])]
@@ -160,6 +131,6 @@ class BookIssueController extends AbstractController
 
         $this->bookIssueRepository->remove($issue, true);
 
-        return $this->json(['message' => 'Book Issue deleted successfully'], Response::HTTP_OK);
+        return $this->json(null, Response::HTTP_NO_CONTENT);
     }
 }

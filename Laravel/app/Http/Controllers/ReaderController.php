@@ -97,6 +97,6 @@ class ReaderController extends Controller
 
         $reader->delete();
 
-        return response()->json(['message' => 'Reader deleted successfully'], Response::HTTP_OK);
+        return response()->json(null, 204);
     }
 }

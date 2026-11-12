@@ -6,9 +6,10 @@ use App\Repository\BookIssueRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use DateTimeInterface;
+use JsonSerializable;
 
 #[ORM\Entity(repositoryClass: BookIssueRepository::class)]
-class BookIssue
+class BookIssue implements JsonSerializable
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -76,5 +77,22 @@ class BookIssue
     {
         $this->returnDate = $returnDate;
         return $this;
+    }
+
+    public function jsonSerialize(): array
+    {
+        return [
+            'id' => $this->id,
+            'book' => $this->book ? [
+                'id' => $this->book->getId(),
+                'title' => $this->book->getTitle(),
+            ] : null,
+            'reader' => $this->reader ? [
+                'id' => $this->reader->getId(),
+                'full_name' => $this->reader->getFullName(),
+            ] : null,
+            'issue_date' => $this->issueDate?->format('Y-m-d'),
+            'return_date' => $this->returnDate?->format('Y-m-d'),
+        ];
     }
 }

@@ -13,6 +13,7 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/categories')]
 class CategoryController extends AbstractController
 {
+    /** @var CategoryRepository */
     private CategoryRepository $categoryRepository;
 
     public function __construct(CategoryRepository $categoryRepository)
@@ -24,16 +25,7 @@ class CategoryController extends AbstractController
     public function getCategories(): JsonResponse
     {
         $categories = $this->categoryRepository->findAll();
-        
-        $data = [];
-        foreach ($categories as $category) {
-            $data[] = [
-                'id' => $category->getId(),
-                'name' => $category->getName(),
-            ];
-        }
-
-        return $this->json($data, Response::HTTP_OK);
+        return $this->json($categories, Response::HTTP_OK);
     }
 
     #[Route('/{id}', methods: ['GET'])]
@@ -44,10 +36,7 @@ class CategoryController extends AbstractController
             return $this->json(['error' => 'Category not found'], Response::HTTP_NOT_FOUND);
         }
 
-        return $this->json([
-            'id' => $category->getId(),
-            'name' => $category->getName(),
-        ], Response::HTTP_OK);
+        return $this->json($category, Response::HTTP_OK);
     }
 
     #[Route('', methods: ['POST'])]
@@ -60,10 +49,7 @@ class CategoryController extends AbstractController
 
         $this->categoryRepository->save($category, true);
 
-        return $this->json([
-            'id' => $category->getId(),
-            'name' => $category->getName(),
-        ], Response::HTTP_CREATED);
+        return $this->json($category, Response::HTTP_CREATED);
     }
 
     #[Route('/{id}', methods: ['PATCH'])]
@@ -82,10 +68,7 @@ class CategoryController extends AbstractController
 
         $this->categoryRepository->save($category, true);
 
-        return $this->json([
-            'id' => $category->getId(),
-            'name' => $category->getName(),
-        ], Response::HTTP_OK);
+        return $this->json($category, Response::HTTP_OK);
     }
 
     #[Route('/{id}', methods: ['DELETE'])]
@@ -98,6 +81,6 @@ class CategoryController extends AbstractController
 
         $this->categoryRepository->remove($category, true);
 
-        return $this->json(['message' => 'Category deleted successfully'], Response::HTTP_OK);
+        return $this->json(null, Response::HTTP_NO_CONTENT);
     }
 }

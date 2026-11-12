@@ -105,6 +105,6 @@ class BookIssueController extends Controller
 
         $bookIssue->delete();
 
-        return response()->json(['message' => 'Book Issue deleted successfully'], Response::HTTP_OK);
+        return response()->json(null, 204);
     }
 }

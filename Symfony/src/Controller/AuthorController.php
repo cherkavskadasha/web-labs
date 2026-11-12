@@ -13,28 +13,19 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/authors')]
 class AuthorController extends AbstractController
 {
+    /** @var AuthorRepository */
     private AuthorRepository $authorRepository;
 
     public function __construct(AuthorRepository $authorRepository)
     {
-        $this->authorRepository = $authorRepository;
+        $this->authorRepository =$authorRepository;
     }
 
     #[Route('', methods: ['GET'])]
     public function getAuthors(): JsonResponse
     {
-        $authors = $this->authorRepository->findAll();
-        
-        $data = [];
-        foreach ($authors as $author) {
-            $data[] = [
-                'id' => $author->getId(),
-                'name' => $author->getName(),
-                'bio' => $author->getBio(),
-            ];
-        }
-
-        return $this->json($data, Response::HTTP_OK);
+        $authors =$this->authorRepository->findAll();
+        return $this->json($authors, Response::HTTP_OK);
     }
 
     #[Route('/{id}', methods: ['GET'])]
@@ -45,11 +36,7 @@ class AuthorController extends AbstractController
             return $this->json(['error' => 'Author not found'], Response::HTTP_NOT_FOUND);
         }
 
-        return $this->json([
-            'id' => $author->getId(),
-            'name' => $author->getName(),
-            'bio' => $author->getBio(),
-        ], Response::HTTP_OK);
+        return $this->json($author, Response::HTTP_OK);
     }
 
     #[Route('', methods: ['POST'])]
@@ -63,15 +50,11 @@ class AuthorController extends AbstractController
 
         $this->authorRepository->save($author, true);
 
-        return $this->json([
-            'id' => $author->getId(),
-            'name' => $author->getName(),
-            'bio' => $author->getBio(),
-        ], Response::HTTP_CREATED);
+        return $this->json($author, Response::HTTP_CREATED);
     }
 
     #[Route('/{id}', methods: ['PATCH'])]
-    public function updateAuthor(int $id, Request $request): JsonResponse
+    public function updateAuthor(int $id, Request$request): JsonResponse
     {
         $author = $this->authorRepository->find($id);
         if (!$author) {
@@ -89,11 +72,7 @@ class AuthorController extends AbstractController
 
         $this->authorRepository->save($author, true);
 
-        return $this->json([
-            'id' => $author->getId(),
-            'name' => $author->getName(),
-            'bio' => $author->getBio(),
-        ], Response::HTTP_OK);
+        return $this->json($author, Response::HTTP_OK);
     }
 
     #[Route('/{id}', methods: ['DELETE'])]
@@ -106,6 +85,6 @@ class AuthorController extends AbstractController
 
         $this->authorRepository->remove($author, true);
 
-        return $this->json(['message' => 'Author deleted successfully'], Response::HTTP_OK);
+        return $this->json(null, Response::HTTP_NO_CONTENT);
     }
 }

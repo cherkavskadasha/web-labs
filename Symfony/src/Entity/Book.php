@@ -4,9 +4,10 @@ namespace App\Entity;
 
 use App\Repository\BookRepository;
 use Doctrine\ORM\Mapping as ORM;
+use JsonSerializable;
 
 #[ORM\Entity(repositoryClass: BookRepository::class)]
-class Book
+class Book implements JsonSerializable
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -74,5 +75,22 @@ class Book
     {
         $this->category = $category;
         return $this;
+    }
+
+    public function jsonSerialize(): array
+    {
+        return [
+            'id' => $this->id,
+            'title' => $this->title,
+            'published_year' => $this->publishedYear,
+            'author' => $this->author ? [
+                'id' => $this->author->getId(),
+                'name' => $this->author->getName(),
+            ] : null,
+            'category' => $this->category ? [
+                'id' => $this->category->getId(),
+                'name' => $this->category->getName(),
+            ] : null,
+        ];
     }
 }

@@ -4,9 +4,10 @@ namespace App\Entity;
 
 use App\Repository\ReaderRepository;
 use Doctrine\ORM\Mapping as ORM;
+use JsonSerializable;
 
 #[ORM\Entity(repositoryClass: ReaderRepository::class)]
-class Reader
+class Reader implements JsonSerializable
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -44,5 +45,14 @@ class Reader
     {
         $this->email = $email;
         return $this;
+    }
+
+    public function jsonSerialize(): array
+    {
+        return [
+            'id' => $this->id,
+            'full_name' => $this->fullName,
+            'email' => $this->email,
+        ];
     }
 }

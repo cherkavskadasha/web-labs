@@ -13,6 +13,7 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/readers')]
 class ReaderController extends AbstractController
 {
+    /** @var ReaderRepository */
     private ReaderRepository $readerRepository;
 
     public function __construct(ReaderRepository $readerRepository)
@@ -24,17 +25,7 @@ class ReaderController extends AbstractController
     public function getReaders(): JsonResponse
     {
         $readers = $this->readerRepository->findAll();
-        
-        $data = [];
-        foreach ($readers as $reader) {
-            $data[] = [
-                'id' => $reader->getId(),
-                'full_name' => $reader->getFullName(),
-                'email' => $reader->getEmail(),
-            ];
-        }
-
-        return $this->json($data, Response::HTTP_OK);
+        return $this->json($readers, Response::HTTP_OK);
     }
 
     #[Route('/{id}', methods: ['GET'])]
@@ -45,11 +36,7 @@ class ReaderController extends AbstractController
             return $this->json(['error' => 'Reader not found'], Response::HTTP_NOT_FOUND);
         }
 
-        return $this->json([
-            'id' => $reader->getId(),
-            'full_name' => $reader->getFullName(),
-            'email' => $reader->getEmail(),
-        ], Response::HTTP_OK);
+        return $this->json($reader, Response::HTTP_OK);
     }
 
     #[Route('', methods: ['POST'])]
@@ -63,11 +50,7 @@ class ReaderController extends AbstractController
 
         $this->readerRepository->save($reader, true);
 
-        return $this->json([
-            'id' => $reader->getId(),
-            'full_name' => $reader->getFullName(),
-            'email' => $reader->getEmail(),
-        ], Response::HTTP_CREATED);
+        return $this->json($reader, Response::HTTP_CREATED);
     }
 
     #[Route('/{id}', methods: ['PATCH'])]
@@ -89,11 +72,7 @@ class ReaderController extends AbstractController
 
         $this->readerRepository->save($reader, true);
 
-        return $this->json([
-            'id' => $reader->getId(),
-            'full_name' => $reader->getFullName(),
-            'email' => $reader->getEmail(),
-        ], Response::HTTP_OK);
+        return $this->json($reader, Response::HTTP_OK);
     }
 
     #[Route('/{id}', methods: ['DELETE'])]
@@ -106,6 +85,6 @@ class ReaderController extends AbstractController
 
         $this->readerRepository->remove($reader, true);
 
-        return $this->json(['message' => 'Reader deleted successfully'], Response::HTTP_OK);
+        return $this->json(null, Response::HTTP_NO_CONTENT);
     }
 }

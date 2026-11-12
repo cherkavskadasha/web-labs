@@ -15,8 +15,13 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/books')]
 class BookController extends AbstractController
 {
+    /** @var BookRepository */
     private BookRepository $bookRepository;
+    
+    /** @var AuthorRepository */
     private AuthorRepository $authorRepository;
+    
+    /** @var CategoryRepository */
     private CategoryRepository $categoryRepository;
 
     public function __construct(
@@ -33,25 +38,7 @@ class BookController extends AbstractController
     public function getBooks(): JsonResponse
     {
         $books = $this->bookRepository->findAll();
-        
-        $data = [];
-        foreach ($books as $book) {
-            $data[] = [
-                'id' => $book->getId(),
-                'title' => $book->getTitle(),
-                'published_year' => $book->getPublishedYear(),
-                'author' => [
-                    'id' => $book->getAuthor()->getId(),
-                    'name' => $book->getAuthor()->getName(),
-                ],
-                'category' => [
-                    'id' => $book->getCategory()->getId(),
-                    'name' => $book->getCategory()->getName(),
-                ]
-            ];
-        }
-
-        return $this->json($data, Response::HTTP_OK);
+        return $this->json($books, Response::HTTP_OK);
     }
 
     #[Route('/{id}', methods: ['GET'])]
@@ -62,19 +49,7 @@ class BookController extends AbstractController
             return $this->json(['error' => 'Book not found'], Response::HTTP_NOT_FOUND);
         }
 
-        return $this->json([
-            'id' => $book->getId(),
-            'title' => $book->getTitle(),
-            'published_year' => $book->getPublishedYear(),
-            'author' => [
-                'id' => $book->getAuthor()->getId(),
-                'name' => $book->getAuthor()->getName(),
-            ],
-            'category' => [
-                'id' => $book->getCategory()->getId(),
-                'name' => $book->getCategory()->getName(),
-            ]
-        ], Response::HTTP_OK);
+        return $this->json($book, Response::HTTP_OK);
     }
 
     #[Route('', methods: ['POST'])]
@@ -97,10 +72,7 @@ class BookController extends AbstractController
 
         $this->bookRepository->save($book, true);
 
-        return $this->json([
-            'id' => $book->getId(),
-            'title' => $book->getTitle(),
-        ], Response::HTTP_CREATED);
+        return $this->json($book, Response::HTTP_CREATED);
     }
 
     #[Route('/{id}', methods: ['PATCH'])]
@@ -134,10 +106,7 @@ class BookController extends AbstractController
 
         $this->bookRepository->save($book, true);
 
-        return $this->json([
-            'id' => $book->getId(),
-            'title' => $book->getTitle(),
-        ], Response::HTTP_OK);
+        return $this->json($book, Response::HTTP_OK);
     }
 
     #[Route('/{id}', methods: ['DELETE'])]
@@ -150,6 +119,6 @@ class BookController extends AbstractController
 
         $this->bookRepository->remove($book, true);
 
-        return $this->json(['message' => 'Book deleted successfully'], Response::HTTP_OK);
+        return $this->json(null, Response::HTTP_NO_CONTENT);
     }
 }

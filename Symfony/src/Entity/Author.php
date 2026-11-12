@@ -5,9 +5,10 @@ namespace App\Entity;
 use App\Repository\AuthorRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use JsonSerializable;
 
 #[ORM\Entity(repositoryClass: AuthorRepository::class)]
-class Author
+class Author implements JsonSerializable
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -45,5 +46,14 @@ class Author
     {
         $this->bio = $bio;
         return $this;
+    }
+
+    public function jsonSerialize(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'bio' => $this->bio,
+        ];
     }
 }
