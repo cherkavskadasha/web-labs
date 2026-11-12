@@ -10,20 +10,31 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/api/books')]
 class BookController extends AbstractController
 {
-    /** @var BookRepository */
+    /**
+     * @var BookRepository
+     */
     private BookRepository $bookRepository;
-    
-    /** @var AuthorRepository */
+
+    /**
+     * @var AuthorRepository
+     */
     private AuthorRepository $authorRepository;
-    
-    /** @var CategoryRepository */
+
+    /**
+     * @var CategoryRepository
+     */
     private CategoryRepository $categoryRepository;
 
+    /**
+     * @param BookRepository $bookRepository
+     * @param AuthorRepository $authorRepository
+     * @param CategoryRepository $categoryRepository
+     */
     public function __construct(
         BookRepository $bookRepository,
         AuthorRepository $authorRepository,
@@ -34,13 +45,23 @@ class BookController extends AbstractController
         $this->categoryRepository = $categoryRepository;
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     #[Route('', methods: ['GET'])]
-    public function getBooks(): JsonResponse
+    public function getBooks(Request $request): JsonResponse
     {
-        $books = $this->bookRepository->findAll();
+        $queryParams = $request->query->all();
+        $books = $this->bookRepository->getBooks($queryParams);
+
         return $this->json($books, Response::HTTP_OK);
     }
 
+    /**
+     * @param int $id
+     * @return JsonResponse
+     */
     #[Route('/{id}', methods: ['GET'])]
     public function getBookById(int $id): JsonResponse
     {
@@ -52,6 +73,10 @@ class BookController extends AbstractController
         return $this->json($book, Response::HTTP_OK);
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     #[Route('', methods: ['POST'])]
     public function createBook(Request $request): JsonResponse
     {
@@ -75,6 +100,11 @@ class BookController extends AbstractController
         return $this->json($book, Response::HTTP_CREATED);
     }
 
+    /**
+     * @param int $id
+     * @param Request $request
+     * @return JsonResponse
+     */
     #[Route('/{id}', methods: ['PATCH'])]
     public function updateBook(int $id, Request $request): JsonResponse
     {
@@ -109,6 +139,10 @@ class BookController extends AbstractController
         return $this->json($book, Response::HTTP_OK);
     }
 
+    /**
+     * @param int $id
+     * @return JsonResponse
+     */
     #[Route('/{id}', methods: ['DELETE'])]
     public function deleteBook(int $id): JsonResponse
     {

@@ -8,26 +8,41 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/api/authors')]
 class AuthorController extends AbstractController
 {
-    /** @var AuthorRepository */
+    /**
+     * @var AuthorRepository
+     */
     private AuthorRepository $authorRepository;
 
+    /**
+     * @param AuthorRepository $authorRepository
+     */
     public function __construct(AuthorRepository $authorRepository)
     {
-        $this->authorRepository =$authorRepository;
+        $this->authorRepository = $authorRepository;
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     #[Route('', methods: ['GET'])]
-    public function getAuthors(): JsonResponse
+    public function getAuthors(Request $request): JsonResponse
     {
-        $authors =$this->authorRepository->findAll();
+        $queryParams = $request->query->all();
+        $authors = $this->authorRepository->getAuthors($queryParams);
+
         return $this->json($authors, Response::HTTP_OK);
     }
 
+    /**
+     * @param int $id
+     * @return JsonResponse
+     */
     #[Route('/{id}', methods: ['GET'])]
     public function getAuthorById(int $id): JsonResponse
     {
@@ -39,6 +54,10 @@ class AuthorController extends AbstractController
         return $this->json($author, Response::HTTP_OK);
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     #[Route('', methods: ['POST'])]
     public function createAuthor(Request $request): JsonResponse
     {
@@ -53,8 +72,13 @@ class AuthorController extends AbstractController
         return $this->json($author, Response::HTTP_CREATED);
     }
 
+    /**
+     * @param int $id
+     * @param Request $request
+     * @return JsonResponse
+     */
     #[Route('/{id}', methods: ['PATCH'])]
-    public function updateAuthor(int $id, Request$request): JsonResponse
+    public function updateAuthor(int $id, Request $request): JsonResponse
     {
         $author = $this->authorRepository->find($id);
         if (!$author) {
@@ -75,6 +99,10 @@ class AuthorController extends AbstractController
         return $this->json($author, Response::HTTP_OK);
     }
 
+    /**
+     * @param int $id
+     * @return JsonResponse
+     */
     #[Route('/{id}', methods: ['DELETE'])]
     public function deleteAuthor(int $id): JsonResponse
     {

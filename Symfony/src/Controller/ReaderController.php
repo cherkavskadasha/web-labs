@@ -8,26 +8,41 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/api/readers')]
 class ReaderController extends AbstractController
 {
-    /** @var ReaderRepository */
+    /**
+     * @var ReaderRepository
+     */
     private ReaderRepository $readerRepository;
 
+    /**
+     * @param ReaderRepository $readerRepository
+     */
     public function __construct(ReaderRepository $readerRepository)
     {
         $this->readerRepository = $readerRepository;
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     #[Route('', methods: ['GET'])]
-    public function getReaders(): JsonResponse
+    public function getReaders(Request $request): JsonResponse
     {
-        $readers = $this->readerRepository->findAll();
+        $queryParams = $request->query->all();
+        $readers = $this->readerRepository->getReaders($queryParams);
+
         return $this->json($readers, Response::HTTP_OK);
     }
 
+    /**
+     * @param int $id
+     * @return JsonResponse
+     */
     #[Route('/{id}', methods: ['GET'])]
     public function getReaderById(int $id): JsonResponse
     {
@@ -39,6 +54,10 @@ class ReaderController extends AbstractController
         return $this->json($reader, Response::HTTP_OK);
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     #[Route('', methods: ['POST'])]
     public function createReader(Request $request): JsonResponse
     {
@@ -53,6 +72,11 @@ class ReaderController extends AbstractController
         return $this->json($reader, Response::HTTP_CREATED);
     }
 
+    /**
+     * @param int $id
+     * @param Request $request
+     * @return JsonResponse
+     */
     #[Route('/{id}', methods: ['PATCH'])]
     public function updateReader(int $id, Request $request): JsonResponse
     {
@@ -75,6 +99,10 @@ class ReaderController extends AbstractController
         return $this->json($reader, Response::HTTP_OK);
     }
 
+    /**
+     * @param int $id
+     * @return JsonResponse
+     */
     #[Route('/{id}', methods: ['DELETE'])]
     public function deleteReader(int $id): JsonResponse
     {

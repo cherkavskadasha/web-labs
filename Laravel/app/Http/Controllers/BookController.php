@@ -3,20 +3,56 @@
 namespace App\Http\Controllers;
 
 use App\Models\Book;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
-use Throwable;
 
 class BookController extends Controller
 {
+    public const FIELDS = [
+        'id'             => 'EQUAL',
+        'title'          => 'LIKE',
+        'published_year' => 'BETWEEN',
+        'author_id'      => 'EQUAL',
+        'category_id'    => 'EQUAL',
+    ];
+
     /**
+     * @param Request $request
      * @return JsonResponse
      */
-    public function getBooks(): JsonResponse
+    public function getBooks(Request $request): JsonResponse
     {
-        $books = Book::with(['author', 'category'])->get();
+        $query = Book::with(['author', 'category']);
+
+        foreach (self::FIELDS as $key => $type) {
+            if (!$request->filled($key)) {
+                continue;
+            }
+
+            $value = $request->query($key);
+
+            if ($type === 'LIKE') {
+                $query->where($key, 'like', '%' . $value . '%');
+            } elseif ($type === 'EQUAL') {
+                $query->where($key, $value);
+            } elseif ($type === 'BETWEEN') {
+                if (is_array($value)) {
+                    if (!empty($value['gte'])) {
+                        $query->where($key, '>=', $value['gte']);
+                    }
+                    if (!empty($value['lte'])) {
+                        $query->where($key, '<=', $value['lte']);
+                    }
+                } else {
+                    $query->where($key, $value);
+                }
+            }
+        }
+
+        $itemsPerPage = (int) $request->query('itemsPerPage', 10);
+        $books = $query->paginate($itemsPerPage);
 
         return response()->json($books, Response::HTTP_OK);
     }
@@ -28,8 +64,12 @@ class BookController extends Controller
     public function getBookById(string $id): JsonResponse
     {
         $book = Book::with(['author', 'category'])->find($id);
-        if (!$book) {
-            return response()->json(['error' => 'Book not found'], Response::HTTP_NOT_FOUND);
+
+        if (empty($book)) {
+            return response()->json(
+                ['message' => 'Book not found'],
+                Response::HTTP_NOT_FOUND
+            );
         }
 
         return response()->json($book, Response::HTTP_OK);
@@ -38,7 +78,6 @@ class BookController extends Controller
     /**
      * @param Request $request
      * @return JsonResponse
-     * @throws Throwable
      */
     public function createBook(Request $request): JsonResponse
     {
@@ -46,29 +85,29 @@ class BookController extends Controller
 
         $book = DB::transaction(function () use ($data) {
             $book = new Book();
-            $book->title = $data['title'] ?? '';
-            $book->author_id = $data['author_id'] ?? null;
-            $book->category_id = $data['category_id'] ?? null;
-            $book->published_year = (int) ($data['published_year'] ?? 0);
+            $book->fill($data);
             $book->save();
 
             return $book;
         });
 
-        return response()->json($book, Response::HTTP_CREATED);
+        return new JsonResponse($book->load(['author', 'category']), Response::HTTP_CREATED);
     }
 
     /**
      * @param string $id
      * @param Request $request
      * @return JsonResponse
-     * @throws Throwable
      */
     public function updateBookById(string $id, Request $request): JsonResponse
     {
         $book = Book::find($id);
-        if (!$book) {
-            return response()->json(['error' => 'Book not found'], Response::HTTP_NOT_FOUND);
+
+        if (empty($book)) {
+            return response()->json(
+                ['message' => 'Book not found'],
+                Response::HTTP_NOT_FOUND
+            );
         }
 
         $data = json_decode($request->getContent(), true);
@@ -77,19 +116,19 @@ class BookController extends Controller
             if (isset($data['title'])) {
                 $book->title = $data['title'];
             }
-            if (array_key_exists('author_id', $data)) {
+            if (isset($data['published_year'])) {
+                $book->published_year = $data['published_year'];
+            }
+            if (isset($data['author_id'])) {
                 $book->author_id = $data['author_id'];
             }
-            if (array_key_exists('category_id', $data)) {
+            if (isset($data['category_id'])) {
                 $book->category_id = $data['category_id'];
-            }
-            if (isset($data['published_year'])) {
-                $book->published_year = (int) $data['published_year'];
             }
             $book->save();
         });
 
-        return response()->json($book, Response::HTTP_OK);
+        return new JsonResponse($book->load(['author', 'category']), Response::HTTP_OK);
     }
 
     /**
@@ -99,12 +138,16 @@ class BookController extends Controller
     public function deleteBookById(string $id): JsonResponse
     {
         $book = Book::find($id);
-        if (!$book) {
-            return response()->json(['error' => 'Book not found'], Response::HTTP_NOT_FOUND);
+
+        if (empty($book)) {
+            return response()->json(
+                ['message' => 'Book not found'],
+                Response::HTTP_NOT_FOUND
+            );
         }
 
         $book->delete();
 
-        return response()->json(null, 204);
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
 }

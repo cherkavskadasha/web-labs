@@ -10,21 +10,32 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Exception;
 
 #[Route('/api/book-issues')]
 class BookIssueController extends AbstractController
 {
-    /** @var BookIssueRepository */
+    /**
+     * @var BookIssueRepository
+     */
     private BookIssueRepository $bookIssueRepository;
-    
-    /** @var BookRepository */
+
+    /**
+     * @var BookRepository
+     */
     private BookRepository $bookRepository;
-    
-    /** @var ReaderRepository */
+
+    /**
+     * @var ReaderRepository
+     */
     private ReaderRepository $readerRepository;
 
+    /**
+     * @param BookIssueRepository $bookIssueRepository
+     * @param BookRepository $bookRepository
+     * @param ReaderRepository $readerRepository
+     */
     public function __construct(
         BookIssueRepository $bookIssueRepository,
         BookRepository $bookRepository,
@@ -35,13 +46,23 @@ class BookIssueController extends AbstractController
         $this->readerRepository = $readerRepository;
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     #[Route('', methods: ['GET'])]
-    public function getBookIssues(): JsonResponse
+    public function getBookIssues(Request $request): JsonResponse
     {
-        $issues = $this->bookIssueRepository->findAll();
+        $queryParams = $request->query->all();
+        $issues = $this->bookIssueRepository->getBookIssues($queryParams);
+
         return $this->json($issues, Response::HTTP_OK);
     }
 
+    /**
+     * @param int $id
+     * @return JsonResponse
+     */
     #[Route('/{id}', methods: ['GET'])]
     public function getBookIssueById(int $id): JsonResponse
     {
@@ -53,6 +74,10 @@ class BookIssueController extends AbstractController
         return $this->json($issue, Response::HTTP_OK);
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     #[Route('', methods: ['POST'])]
     public function createBookIssue(Request $request): JsonResponse
     {
@@ -68,7 +93,7 @@ class BookIssueController extends AbstractController
         $issue = new BookIssue();
         $issue->setBook($book);
         $issue->setReader($reader);
-        
+
         try {
             $issueDate = new \DateTime($data['issue_date'] ?? 'now');
             $issue->setIssueDate($issueDate);
@@ -85,6 +110,11 @@ class BookIssueController extends AbstractController
         return $this->json($issue, Response::HTTP_CREATED);
     }
 
+    /**
+     * @param int $id
+     * @param Request $request
+     * @return JsonResponse
+     */
     #[Route('/{id}', methods: ['PATCH'])]
     public function updateBookIssue(int $id, Request $request): JsonResponse
     {
@@ -97,12 +127,16 @@ class BookIssueController extends AbstractController
 
         if (isset($data['book_id'])) {
             $book = $this->bookRepository->find($data['book_id']);
-            if ($book) $issue->setBook($book);
+            if ($book) {
+                $issue->setBook($book);
+            }
         }
-        
+
         if (isset($data['reader_id'])) {
             $reader = $this->readerRepository->find($data['reader_id']);
-            if ($reader) $issue->setReader($reader);
+            if ($reader) {
+                $issue->setReader($reader);
+            }
         }
 
         try {
@@ -121,6 +155,10 @@ class BookIssueController extends AbstractController
         return $this->json($issue, Response::HTTP_OK);
     }
 
+    /**
+     * @param int $id
+     * @return JsonResponse
+     */
     #[Route('/{id}', methods: ['DELETE'])]
     public function deleteBookIssue(int $id): JsonResponse
     {
