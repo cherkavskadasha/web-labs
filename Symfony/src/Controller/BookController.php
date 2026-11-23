@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/api/books')]
 class BookController extends AbstractController
@@ -40,9 +41,9 @@ class BookController extends AbstractController
         AuthorRepository $authorRepository,
         CategoryRepository $categoryRepository
     ) {
-        $this->bookRepository = $bookRepository;
-        $this->authorRepository = $authorRepository;
-        $this->categoryRepository = $categoryRepository;
+        $this->bookRepository =$bookRepository;
+        $this->authorRepository =$authorRepository;
+        $this->categoryRepository =$categoryRepository;
     }
 
     /**
@@ -50,10 +51,14 @@ class BookController extends AbstractController
      * @return JsonResponse
      */
     #[Route('', methods: ['GET'])]
+    #[IsGranted('ROLE_CLIENT')]
     public function getBooks(Request $request): JsonResponse
     {
-        $queryParams = $request->query->all();
-        $books = $this->bookRepository->getBooks($queryParams);
+        $queryParams =$request->query->all();
+        $page = max(1, (int)$request->query->get('page', 1));
+        $itemsPerPage = max(1, (int)$request->query->get('itemsPerPage', 10));
+
+        $books = $this->bookRepository->getBooks($queryParams, $page,$itemsPerPage);
 
         return $this->json($books, Response::HTTP_OK);
     }
@@ -63,6 +68,7 @@ class BookController extends AbstractController
      * @return JsonResponse
      */
     #[Route('/{id}', methods: ['GET'])]
+    #[IsGranted('ROLE_CLIENT')]
     public function getBookById(int $id): JsonResponse
     {
         $book = $this->bookRepository->find($id);
@@ -78,12 +84,12 @@ class BookController extends AbstractController
      * @return JsonResponse
      */
     #[Route('', methods: ['POST'])]
+    #[IsGranted('ROLE_MANAGER')]
     public function createBook(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
-        $author = $this->authorRepository->find($data['author_id'] ?? 0);
-        $category = $this->categoryRepository->find($data['category_id'] ?? 0);
+        $author =$this->authorRepository->find($data['author_id'] ?? 0);$category = $this->categoryRepository->find($data['category_id'] ?? 0);
 
         if (!$author || !$category) {
             return $this->json(['error' => 'Author or Category not found'], Response::HTTP_BAD_REQUEST);
@@ -106,7 +112,8 @@ class BookController extends AbstractController
      * @return JsonResponse
      */
     #[Route('/{id}', methods: ['PATCH'])]
-    public function updateBook(int $id, Request $request): JsonResponse
+    #[IsGranted('ROLE_MANAGER')]
+    public function updateBook(int $id, Request$request): JsonResponse
     {
         $book = $this->bookRepository->find($id);
         if (!$book) {
@@ -121,14 +128,12 @@ class BookController extends AbstractController
         if (isset($data['published_year'])) {
             $book->setPublishedYear((int)$data['published_year']);
         }
-        if (isset($data['author_id'])) {
-            $author = $this->authorRepository->find($data['author_id']);
+        if (isset($data['author_id'])) {$author = $this->authorRepository->find($data['author_id']);
             if ($author) {
                 $book->setAuthor($author);
             }
         }
-        if (isset($data['category_id'])) {
-            $category = $this->categoryRepository->find($data['category_id']);
+        if (isset($data['category_id'])) {$category = $this->categoryRepository->find($data['category_id']);
             if ($category) {
                 $book->setCategory($category);
             }
@@ -144,6 +149,7 @@ class BookController extends AbstractController
      * @return JsonResponse
      */
     #[Route('/{id}', methods: ['DELETE'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function deleteBook(int $id): JsonResponse
     {
         $book = $this->bookRepository->find($id);

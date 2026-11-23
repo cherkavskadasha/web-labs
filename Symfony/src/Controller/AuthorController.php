@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/api/authors')]
 class AuthorController extends AbstractController
@@ -23,7 +24,7 @@ class AuthorController extends AbstractController
      */
     public function __construct(AuthorRepository $authorRepository)
     {
-        $this->authorRepository = $authorRepository;
+        $this->authorRepository =$authorRepository;
     }
 
     /**
@@ -31,10 +32,14 @@ class AuthorController extends AbstractController
      * @return JsonResponse
      */
     #[Route('', methods: ['GET'])]
+    #[IsGranted('ROLE_CLIENT')]
     public function getAuthors(Request $request): JsonResponse
     {
-        $queryParams = $request->query->all();
-        $authors = $this->authorRepository->getAuthors($queryParams);
+        $queryParams =$request->query->all();
+        $page = max(1, (int)$request->query->get('page', 1));
+        $itemsPerPage = max(1, (int)$request->query->get('itemsPerPage', 10));
+
+        $authors = $this->authorRepository->getAuthors($queryParams, $page,$itemsPerPage);
 
         return $this->json($authors, Response::HTTP_OK);
     }
@@ -44,6 +49,7 @@ class AuthorController extends AbstractController
      * @return JsonResponse
      */
     #[Route('/{id}', methods: ['GET'])]
+    #[IsGranted('ROLE_CLIENT')]
     public function getAuthorById(int $id): JsonResponse
     {
         $author = $this->authorRepository->find($id);
@@ -59,6 +65,7 @@ class AuthorController extends AbstractController
      * @return JsonResponse
      */
     #[Route('', methods: ['POST'])]
+    #[IsGranted('ROLE_MANAGER')]
     public function createAuthor(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -78,7 +85,8 @@ class AuthorController extends AbstractController
      * @return JsonResponse
      */
     #[Route('/{id}', methods: ['PATCH'])]
-    public function updateAuthor(int $id, Request $request): JsonResponse
+    #[IsGranted('ROLE_MANAGER')]
+    public function updateAuthor(int $id, Request$request): JsonResponse
     {
         $author = $this->authorRepository->find($id);
         if (!$author) {
@@ -104,6 +112,7 @@ class AuthorController extends AbstractController
      * @return JsonResponse
      */
     #[Route('/{id}', methods: ['DELETE'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function deleteAuthor(int $id): JsonResponse
     {
         $author = $this->authorRepository->find($id);

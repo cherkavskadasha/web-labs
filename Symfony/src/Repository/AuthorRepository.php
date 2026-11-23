@@ -31,10 +31,11 @@ class AuthorRepository extends ServiceEntityRepository
      * @param bool $flush
      * @return void
      */
-    public function save(Author $entity, bool$flush = false): void
+    public function save(Author $entity, bool $flush = false): void
     {
         $this->getEntityManager()->persist($entity);
-        if ($flush) {$this->getEntityManager()->flush();
+        if ($flush) {
+            $this->getEntityManager()->flush();
         }
     }
 
@@ -43,27 +44,27 @@ class AuthorRepository extends ServiceEntityRepository
      * @param bool $flush
      * @return void
      */
-    public function remove(Author $entity, bool$flush = false): void
+    public function remove(Author $entity, bool $flush = false): void
     {
         $this->getEntityManager()->remove($entity);
-        if ($flush) {$this->getEntityManager()->flush();
+        if ($flush) {
+            $this->getEntityManager()->flush();
         }
     }
 
     /**
      * @param array $criteria
+     * @param int $page
+     * @param int $itemsPerPage
      * @return array
      */
-    public function getAuthors(array $criteria = []): array
+    public function getAuthors(array $criteria = [], int $page = 1, int $itemsPerPage = 10): array
     {
-        $queryBuilder =$this->createQueryBuilder('authors');
-        $queryBuilder =$this->filterData($queryBuilder,$criteria);
-
-        $page = (int)($criteria['page'] ?? 1);
-        $itemsPerPage = (int)($criteria['itemsPerPage'] ?? 10);
+        $queryBuilder = $this->createQueryBuilder('authors');
+        $queryBuilder = $this->filterData($queryBuilder, $criteria);
 
         return $queryBuilder
-            ->setFirstResult(($page - 1) *$itemsPerPage)
+            ->setFirstResult(($page - 1) * $itemsPerPage)
             ->setMaxResults($itemsPerPage)
             ->getQuery()
             ->getResult();
@@ -74,19 +75,21 @@ class AuthorRepository extends ServiceEntityRepository
      * @param array $criteria
      * @return QueryBuilder
      */
-    public function filterData(QueryBuilder $queryBuilder, array$criteria = []): QueryBuilder
+    public function filterData(QueryBuilder $queryBuilder, array $criteria = []): QueryBuilder
     {
-        $alias =$queryBuilder->getRootAliases()[0];
+        $alias = $queryBuilder->getRootAliases()[0];
 
-        foreach (self::FIELDS as $key =>$type) {
+        foreach (self::FIELDS as $key => $type) {
             if (!isset($criteria[$key]) || $criteria[$key] === '') {
                 continue;
             }
 
-            if ($type === 'LIKE') {$queryBuilder
+            if ($type === 'LIKE') {
+                $queryBuilder
                     ->andWhere($queryBuilder->expr()->like("$alias.$key", ":$key"))
                     ->setParameter($key, '%' . $criteria[$key] . '%');
-            } elseif ($type === 'EQUAL') {$queryBuilder
+            } elseif ($type === 'EQUAL') {
+                $queryBuilder
                     ->andWhere("$alias.$key = :$key")
                     ->setParameter($key, $criteria[$key]);
             }

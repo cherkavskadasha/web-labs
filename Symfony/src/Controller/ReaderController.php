@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/api/readers')]
 class ReaderController extends AbstractController
@@ -23,7 +24,7 @@ class ReaderController extends AbstractController
      */
     public function __construct(ReaderRepository $readerRepository)
     {
-        $this->readerRepository = $readerRepository;
+        $this->readerRepository =$readerRepository;
     }
 
     /**
@@ -31,10 +32,14 @@ class ReaderController extends AbstractController
      * @return JsonResponse
      */
     #[Route('', methods: ['GET'])]
+    #[IsGranted('ROLE_CLIENT')]
     public function getReaders(Request $request): JsonResponse
     {
-        $queryParams = $request->query->all();
-        $readers = $this->readerRepository->getReaders($queryParams);
+        $queryParams =$request->query->all();
+        $page = max(1, (int)$request->query->get('page', 1));
+        $itemsPerPage = max(1, (int)$request->query->get('itemsPerPage', 10));
+
+        $readers = $this->readerRepository->getReaders($queryParams, $page,$itemsPerPage);
 
         return $this->json($readers, Response::HTTP_OK);
     }
@@ -44,6 +49,7 @@ class ReaderController extends AbstractController
      * @return JsonResponse
      */
     #[Route('/{id}', methods: ['GET'])]
+    #[IsGranted('ROLE_CLIENT')]
     public function getReaderById(int $id): JsonResponse
     {
         $reader = $this->readerRepository->find($id);
@@ -59,6 +65,7 @@ class ReaderController extends AbstractController
      * @return JsonResponse
      */
     #[Route('', methods: ['POST'])]
+    #[IsGranted('ROLE_MANAGER')]
     public function createReader(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -78,7 +85,8 @@ class ReaderController extends AbstractController
      * @return JsonResponse
      */
     #[Route('/{id}', methods: ['PATCH'])]
-    public function updateReader(int $id, Request $request): JsonResponse
+    #[IsGranted('ROLE_MANAGER')]
+    public function updateReader(int $id, Request$request): JsonResponse
     {
         $reader = $this->readerRepository->find($id);
         if (!$reader) {
@@ -104,6 +112,7 @@ class ReaderController extends AbstractController
      * @return JsonResponse
      */
     #[Route('/{id}', methods: ['DELETE'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function deleteReader(int $id): JsonResponse
     {
         $reader = $this->readerRepository->find($id);

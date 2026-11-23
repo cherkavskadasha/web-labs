@@ -56,15 +56,14 @@ class BookRepository extends ServiceEntityRepository
 
     /**
      * @param array $criteria
+     * @param int $page
+     * @param int $itemsPerPage
      * @return array
      */
-    public function getBooks(array $criteria = []): array
+    public function getBooks(array $criteria = [], int $page = 1, int $itemsPerPage = 10): array
     {
         $queryBuilder = $this->createQueryBuilder('books');
         $queryBuilder = $this->filterData($queryBuilder, $criteria);
-
-        $page = (int)($criteria['page'] ?? 1);
-        $itemsPerPage = (int)($criteria['itemsPerPage'] ?? 10);
 
         return $queryBuilder
             ->setFirstResult(($page - 1) * $itemsPerPage)

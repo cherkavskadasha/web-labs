@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Exception;
 
 #[Route('/api/book-issues')]
@@ -41,9 +42,9 @@ class BookIssueController extends AbstractController
         BookRepository $bookRepository,
         ReaderRepository $readerRepository
     ) {
-        $this->bookIssueRepository = $bookIssueRepository;
-        $this->bookRepository = $bookRepository;
-        $this->readerRepository = $readerRepository;
+        $this->bookIssueRepository =$bookIssueRepository;
+        $this->bookRepository =$bookRepository;
+        $this->readerRepository =$readerRepository;
     }
 
     /**
@@ -51,10 +52,14 @@ class BookIssueController extends AbstractController
      * @return JsonResponse
      */
     #[Route('', methods: ['GET'])]
+    #[IsGranted('ROLE_CLIENT')]
     public function getBookIssues(Request $request): JsonResponse
     {
-        $queryParams = $request->query->all();
-        $issues = $this->bookIssueRepository->getBookIssues($queryParams);
+        $queryParams =$request->query->all();
+        $page = max(1, (int)$request->query->get('page', 1));
+        $itemsPerPage = max(1, (int)$request->query->get('itemsPerPage', 10));
+
+        $issues = $this->bookIssueRepository->getBookIssues($queryParams, $page,$itemsPerPage);
 
         return $this->json($issues, Response::HTTP_OK);
     }
@@ -64,6 +69,7 @@ class BookIssueController extends AbstractController
      * @return JsonResponse
      */
     #[Route('/{id}', methods: ['GET'])]
+    #[IsGranted('ROLE_CLIENT')]
     public function getBookIssueById(int $id): JsonResponse
     {
         $issue = $this->bookIssueRepository->find($id);
@@ -79,14 +85,14 @@ class BookIssueController extends AbstractController
      * @return JsonResponse
      */
     #[Route('', methods: ['POST'])]
+    #[IsGranted('ROLE_MANAGER')]
     public function createBookIssue(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
-        $book = $this->bookRepository->find($data['book_id'] ?? 0);
-        $reader = $this->readerRepository->find($data['reader_id'] ?? 0);
+        $book =$this->bookRepository->find($data['book_id'] ?? 0);$reader = $this->readerRepository->find($data['reader_id'] ?? 0);
 
-        if (!$book || !$reader) {
+        if (!$author || !$category) {
             return $this->json(['error' => 'Book or Reader not found'], Response::HTTP_BAD_REQUEST);
         }
 
@@ -116,7 +122,8 @@ class BookIssueController extends AbstractController
      * @return JsonResponse
      */
     #[Route('/{id}', methods: ['PATCH'])]
-    public function updateBookIssue(int $id, Request $request): JsonResponse
+    #[IsGranted('ROLE_MANAGER')]
+    public function updateBookIssue(int $id, Request$request): JsonResponse
     {
         $issue = $this->bookIssueRepository->find($id);
         if (!$issue) {
@@ -125,15 +132,13 @@ class BookIssueController extends AbstractController
 
         $data = json_decode($request->getContent(), true);
 
-        if (isset($data['book_id'])) {
-            $book = $this->bookRepository->find($data['book_id']);
+        if (isset($data['book_id'])) {$book = $this->bookRepository->find($data['book_id']);
             if ($book) {
                 $issue->setBook($book);
             }
         }
 
-        if (isset($data['reader_id'])) {
-            $reader = $this->readerRepository->find($data['reader_id']);
+        if (isset($data['reader_id'])) {$reader = $this->readerRepository->find($data['reader_id']);
             if ($reader) {
                 $issue->setReader($reader);
             }
@@ -143,8 +148,7 @@ class BookIssueController extends AbstractController
             if (isset($data['issue_date'])) {
                 $issue->setIssueDate(new \DateTime($data['issue_date']));
             }
-            if (array_key_exists('return_date', $data)) {
-                $issue->setReturnDate($data['return_date'] ? new \DateTime($data['return_date']) : null);
+            if (array_key_exists('return_date', $data)) {$issue->setReturnDate($data['return_date'] ? new \DateTime($data['return_date']) : null);
             }
         } catch (Exception $e) {
             return $this->json(['error' => 'Invalid date format'], Response::HTTP_BAD_REQUEST);
@@ -160,6 +164,7 @@ class BookIssueController extends AbstractController
      * @return JsonResponse
      */
     #[Route('/{id}', methods: ['DELETE'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function deleteBookIssue(int $id): JsonResponse
     {
         $issue = $this->bookIssueRepository->find($id);
